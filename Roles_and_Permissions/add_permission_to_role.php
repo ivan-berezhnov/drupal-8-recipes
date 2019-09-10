@@ -4,6 +4,7 @@
 $roles = \Drupal::entityTypeManager()->getStorage('user_role')->loadMultiple();
 
 // Get full list of permission and sort by module.
+$permissions = \Drupal::service('user.permissions')->getPermissions();
 $permissions_by_provider = [];
 foreach ($permissions as $key => $permission) {
   $permissions_by_provider[$permission['provider']][] = $key;
