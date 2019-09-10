@@ -1,0 +1,2 @@
+// Change number of last updates for speciffic module
+drush ev "drupal_set_installed_schema_version('xxx_alters', 8140)"
