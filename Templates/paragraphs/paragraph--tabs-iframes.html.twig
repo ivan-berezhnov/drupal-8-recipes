@@ -1,0 +1,95 @@
+{#
+/**
+ * @file
+ * Default theme implementation to display a paragraph.
+ *
+ * Available variables:
+ * - paragraph: Full paragraph entity.
+ *   Only method names starting with "get", "has", or "is" and a few common
+ *   methods such as "id", "label", and "bundle" are available. For example:
+ *   - paragraph.getCreatedTime() will return the paragraph creation timestamp.
+ *   - paragraph.id(): The paragraph ID.
+ *   - paragraph.bundle(): The type of the paragraph, for example, "image" or "text".
+ *   - paragraph.getOwnerId(): The user ID of the paragraph author.
+ *   See Drupal\paragraphs\Entity\Paragraph for a full list of public properties
+ *   and methods for the paragraph object.
+ * - content: All paragraph items. Use {{ content }} to print them all,
+ *   or print a subset such as {{ content.field_example }}. Use
+ *   {{ content|without('field_example') }} to temporarily suppress the printing
+ *   of a given child element.
+ * - attributes: HTML attributes for the containing element.
+ *   The attributes.class element may contain one or more of the following
+ *   classes:
+ *   - paragraphs: The current template type (also known as a "theming hook").
+ *   - paragraphs--type-[type]: The current paragraphs type. For example, if the paragraph is an
+ *     "Image" it would result in "paragraphs--type--image". Note that the machine
+ *     name will often be in a short form of the human readable label.
+ *   - paragraphs--view-mode--[view_mode]: The View Mode of the paragraph; for example, a
+ *     preview would result in: "paragraphs--view-mode--preview", and
+ *     default: "paragraphs--view-mode--default".
+ * - view_mode: View mode; for example, "preview" or "full".
+ * - logged_in: Flag for authenticated user status. Will be true when the
+ *   current user is a logged-in member.
+ * - is_admin: Flag for admin user status. Will be true when the current user
+ *   is an administrator.
+ *
+ * @see template_preprocess_paragraph()
+ *
+ * @ingroup themeable
+ */
+#}
+{%
+  set classes = [
+  'row',
+  'paragraph',
+  'paragraph--type--' ~ paragraph.bundle|clean_class,
+  view_mode ? 'paragraph--view-mode--' ~ view_mode|clean_class,
+  not paragraph.isPublished() ? 'paragraph--unpublished'
+]
+%}
+
+{% block paragraph %}
+  <div{{ attributes.addClass(classes) }}>
+    {% block content %}
+      {% if content.field_tabs_of_iframes['#items']|length >= 1 %}
+
+        <div class="col-12">
+          <div class="nav nav-tabs" id="list-tab" role="tablist">
+
+            {# CASE: Paragraph type has reference to another Paragraph type.
+                     I use 'for' to create tabs from name field and tab content
+                     from content field #}
+
+            {% for key, value in content.field_tabs_of_iframes['#items'] %}
+
+              {# After the [key] we shoudl specify entity type, and here we get in an entity reference #}
+              {% set tab_id = content.field_tabs_of_iframes[key]['#paragraph'].field_tab_name.0.value|replace({' ': "_"})|lower %}
+              <a
+                      class="nav-item nav-link{% if key == 0 %} active{% endif %}"
+                      id="list-{{ tab_id }}-list"
+                      data-toggle="list"
+                      href="#list-{{ tab_id }}"
+                      role="tab"
+                      aria-controls="{{ tab_id }}">
+                {{ content.field_tabs_of_iframes[key]['#paragraph'].field_tab_name.0.value }}
+              </a>
+            {% endfor %}
+          </div>
+        </div>
+
+        <div class="col-12">
+          <div class="tab-content" id="nav-tabContent">
+            {% for key, value in content.field_tabs_of_iframes['#items'] %}
+              {% set tab_id = content.field_tabs_of_iframes[key]['#paragraph'].field_tab_name.0.value|replace({' ': "_"})|lower %}
+              <div class="tab-pane fade{% if key == 0 %} show active{% endif %}" id="list-{{ tab_id }}" role="tabpanel"
+                   aria-labelledby="list-{{ tab_id }}-list">
+                {{ content.field_tabs_of_iframes[key]['#paragraph'].field_iframe_code.0.value|raw }}
+              </div>
+            {% endfor %}
+          </div>
+        </div>
+
+      {% endif %}
+    {% endblock %}
+  </div>
+{% endblock paragraph %}
